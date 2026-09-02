@@ -5,7 +5,7 @@ import { calculateGoalPace, getPeriodBounds, type Timeframe, type Weekday } from
 
 type Metric = 'distance' | 'elevation';
 type GoalInput = { goal: number; current: number };
-type GoalData = Record<Timeframe, Record<Metric, GoalInput>>;
+type GoalData = Record<Timeframe, Record<Metric, GoalInput | null>>;
 type FormKey = `${Timeframe}_${Metric}_${'goal' | 'current'}`;
 type FormValues = Record<FormKey, string>;
 
@@ -43,43 +43,76 @@ export default function VersionB() {
   const [submitted, setSubmitted] = useState<GoalData | null>(null);
   const [asOf, setAsOf] = useState(todayIso);
   const [weekStartsOn, setWeekStartsOn] = useState<Weekday>(1);
-  const [saveMessage, setSaveMessage] = useState('Your entries will be remembered on this browser.');
+  const [storageReady, setStorageReady] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('Changes are saved automatically on this browser.');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     const loadSavedValues = window.setTimeout(() => {
       try {
         const saved = window.localStorage.getItem(STORAGE_KEY);
-        if (!saved) return;
-        const parsed = JSON.parse(saved) as { values?: FormValues; weekStartsOn?: Weekday };
-        if (parsed.values) setValues({ ...blankValues, ...parsed.values });
-        if (typeof parsed.weekStartsOn === 'number') setWeekStartsOn(parsed.weekStartsOn);
-        setSaveMessage('Saved values loaded. Update your latest totals, then calculate.');
+        if (saved) {
+          const parsed = JSON.parse(saved) as { values?: FormValues; weekStartsOn?: Weekday };
+          if (parsed.values) setValues({ ...blankValues, ...parsed.values });
+          if (typeof parsed.weekStartsOn === 'number') setWeekStartsOn(parsed.weekStartsOn);
+          setSaveMessage('Saved values loaded. Update your latest totals, then calculate.');
+        }
       } catch {
         setSaveMessage('Saved values could not be loaded. Enter them again to replace the saved copy.');
       }
+      setStorageReady(true);
     }, 0);
     return () => window.clearTimeout(loadSavedValues);
   }, []);
 
+  useEffect(() => {
+    if (!storageReady) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ values, weekStartsOn }));
+    } catch {
+      // Calculation still works when a browser blocks local storage.
+    }
+  }, [storageReady, values, weekStartsOn]);
+
   const results = useMemo(() => submitted && metrics.map((metric) => ({
     ...metric,
-    periods: periods.map((period) => {
+    periods: periods.flatMap((period) => {
+      const input = submitted[period.id][metric.id];
+      if (!input) return [];
       const bounds = getPeriodBounds(period.id, asOf, weekStartsOn);
-      return { ...period, bounds, input: submitted[period.id][metric.id], result: calculateGoalPace({ ...submitted[period.id][metric.id], ...bounds }) };
+      return [{ ...period, bounds, input, result: calculateGoalPace({ ...input, ...bounds }) }];
     }),
-  })), [submitted, asOf, weekStartsOn]);
+  })).filter((metric) => metric.periods.length > 0), [submitted, asOf, weekStartsOn]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = {} as GoalData;
+    let completePairs = 0;
+    setFormError('');
     for (const period of periods) {
-      data[period.id] = {} as Record<Metric, GoalInput>;
+      data[period.id] = {} as Record<Metric, GoalInput | null>;
       for (const metric of metrics) {
-        data[period.id][metric.id] = {
-          goal: Number(values[`${period.id}_${metric.id}_goal`]) || 0,
-          current: Number(values[`${period.id}_${metric.id}_current`]) || 0,
-        };
+        const goalValue = values[`${period.id}_${metric.id}_goal`];
+        const currentValue = values[`${period.id}_${metric.id}_current`];
+        if (!goalValue && !currentValue) {
+          data[period.id][metric.id] = null;
+          continue;
+        }
+        if (!goalValue || !currentValue) {
+          setFormError(`Complete both ${period.label.toLowerCase()} ${metric.label.toLowerCase()} fields, or leave both blank.`);
+          return;
+        }
+        if (Number(goalValue) <= 0) {
+          setFormError(`${period.label} ${metric.label.toLowerCase()} goal must be greater than zero.`);
+          return;
+        }
+        data[period.id][metric.id] = { goal: Number(goalValue), current: Number(currentValue) };
+        completePairs += 1;
       }
+    }
+    if (completePairs === 0) {
+      setFormError('Enter at least one complete goal and “so far” pair to calculate your pace.');
+      return;
     }
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ values, weekStartsOn }));
@@ -97,6 +130,7 @@ export default function VersionB() {
     setSubmitted(null);
     setWeekStartsOn(1);
     setSaveMessage('Saved values erased from this browser.');
+    setFormError('');
   };
 
   return (
@@ -113,7 +147,7 @@ export default function VersionB() {
         <p className="intro">No account or connection required. Enter your current totals and goals to calculate what you need to ride each day.</p>
       </section>
 
-      <form className="goal-form" onSubmit={submit} autoComplete="on">
+      <form className="goal-form" onSubmit={submit} autoComplete="off">
         <div className="form-settings">
           <label>Progress through<input type="date" required value={asOf} onChange={(event) => setAsOf(event.target.value)} /></label>
           <label>My week starts on<select value={weekStartsOn} onChange={(event) => setWeekStartsOn(Number(event.target.value) as Weekday)}>{weekdays.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
@@ -128,16 +162,17 @@ export default function VersionB() {
                 <div className="form-period" key={period.id}>
                   <h2>{period.label}</h2>
                   <label>{period.label} {metric.label.toLowerCase()} goal
-                    <span className="number-input"><input type="number" name={`${period.id}_${metric.id}_goal`} autoComplete="on" min="0" step="any" required inputMode="decimal" value={values[`${period.id}_${metric.id}_goal`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_goal`]: event.target.value })} /><i>{metric.unit}</i></span>
+                    <span className="number-input"><input type="number" name={`${period.id}_${metric.id}_goal`} min="0" step="any" inputMode="decimal" value={values[`${period.id}_${metric.id}_goal`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_goal`]: event.target.value })} /><i>{metric.unit}</i></span>
                   </label>
                   <label>{period.label} {metric.label.toLowerCase()} so far
-                    <span className="number-input"><input type="number" name={`${period.id}_${metric.id}_current`} autoComplete="on" min="0" step="any" required inputMode="decimal" value={values[`${period.id}_${metric.id}_current`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_current`]: event.target.value })} /><i>{metric.unit}</i></span>
+                    <span className="number-input"><input type="number" name={`${period.id}_${metric.id}_current`} min="0" step="any" inputMode="decimal" value={values[`${period.id}_${metric.id}_current`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_current`]: event.target.value })} /><i>{metric.unit}</i></span>
                   </label>
                 </div>
               ))}
             </fieldset>
           ))}
         </div>
+        {formError && <p className="form-error" role="alert">{formError}</p>}
         <button className="calculate-button" type="submit">Calculate my pace <span>→</span></button>
       </form>
 
