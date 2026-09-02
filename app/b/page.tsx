@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { calculateGoalPace, getPeriodBounds, type Timeframe, type Weekday } from '@/lib/calculations';
 
 type Metric = 'distance' | 'elevation';
@@ -72,7 +71,8 @@ export default function VersionB() {
     <main className="version-b">
       <header className="topbar">
         <a className="brand" href="/b"><span className="brand-mark">CG</span><span>Cycling Goals <b>Intelligence</b></span></a>
-        <Link className="version-link" href="/">View Version A</Link>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a className="version-link" href="/">View Version A</a>
       </header>
 
       <section className="b-hero">
