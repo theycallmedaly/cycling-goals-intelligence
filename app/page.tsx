@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { calculateGoalPace, getPeriodBounds, type Timeframe, type Weekday } from '@/lib/calculations';
 
 type GoalInput = { goal: number; current: number };
@@ -124,9 +125,10 @@ export default function Home() {
           <span className="brand-mark">CG</span>
           <span>Cycling Goals <b>Intelligence</b></span>
         </a>
-        <button className="edit-button" onClick={() => setEditing((value) => !value)}>
-          {editing ? 'Done editing' : 'Edit goals'}
-        </button>
+        <div className="top-actions">
+          <Link className="version-link" href="/b">Try Version B</Link>
+          <button className="edit-button" onClick={() => setEditing((value) => !value)}>{editing ? 'Done editing' : 'Edit goals'}</button>
+        </div>
       </header>
 
       <section className="hero" id="top">
