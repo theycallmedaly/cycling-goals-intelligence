@@ -1,7 +1,7 @@
 export type Timeframe = 'week' | 'month' | 'year';
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-type PaceInput = { goal: number; current: number; start: string; end: string; asOf: string };
+type PaceInput = { goal: number; current: number; start: string; end: string; asOf: string; blockedDates?: string[] };
 const DAY_MS = 86_400_000;
 const parseDate = (iso: string) => new Date(`${iso}T12:00:00Z`);
 const toIso = (date: Date) => date.toISOString().slice(0, 10);
@@ -26,7 +26,7 @@ export function getPeriodBounds(timeframe: Timeframe, asOf: string, weekStartsOn
   return { start: toIso(start), end: toIso(end), asOf, startLabel: shortDate(toIso(start)), endLabel: shortDate(toIso(end)) };
 }
 
-export function calculateGoalPace({ goal, current, start, end, asOf }: PaceInput) {
+export function calculateGoalPace({ goal, current, start, end, asOf, blockedDates = [] }: PaceInput) {
   const totalDays = daysInclusive(start, end);
   const elapsedDays = Math.min(totalDays, daysInclusive(start, asOf));
   const remainingDays = Math.max(0, daysInclusive(asOf, end));
@@ -34,8 +34,10 @@ export function calculateGoalPace({ goal, current, start, end, asOf }: PaceInput
   const aheadBehind = current - targetProgress;
   const remaining = Math.max(0, goal - current);
   const baselinePerDay = totalDays ? goal / totalDays : 0;
-  const requiredPerDay = remainingDays ? remaining / remainingDays : remaining;
+  const blockedDays = new Set(blockedDates.filter((date) => date >= asOf && date <= end)).size;
+  const rideDaysRemaining = Math.max(0, remainingDays - blockedDays);
+  const requiredPerDay = rideDaysRemaining ? remaining / rideDaysRemaining : remaining ? Number.POSITIVE_INFINITY : 0;
   const nextMidnightTarget = Math.min(goal, targetProgress + baselinePerDay);
   const catchUpToday = Math.max(0, nextMidnightTarget - current);
-  return { totalDays, elapsedDays, remainingDays, targetProgress, aheadBehind, remaining, baselinePerDay, requiredPerDay, catchUpToday, progressPercent: goal ? current / goal * 100 : 0, targetPercent: goal ? targetProgress / goal * 100 : 0 };
+  return { totalDays, elapsedDays, remainingDays, blockedDays, rideDaysRemaining, targetProgress, aheadBehind, remaining, baselinePerDay, requiredPerDay, catchUpToday, progressPercent: goal ? current / goal * 100 : 0, targetPercent: goal ? targetProgress / goal * 100 : 0 };
 }

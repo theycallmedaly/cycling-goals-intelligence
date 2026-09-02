@@ -58,6 +58,21 @@ test('spreads a day-45 deficit over every remaining day', () => {
   assert.ok(Math.abs(day45.catchUpToday - 11) < 1e-9);
 });
 
+test('removes blocked dates from the available riding-day pace', () => {
+  const result = calculateGoalPace({
+    goal: 100,
+    current: 20,
+    start: '2026-09-01',
+    end: '2026-09-10',
+    asOf: '2026-09-05',
+    blockedDates: ['2026-09-05', '2026-09-07', '2026-09-07', '2026-10-01'],
+  });
+  assert.equal(result.remainingDays, 6);
+  assert.equal(result.blockedDays, 2);
+  assert.equal(result.rideDaysRemaining, 4);
+  assert.equal(result.requiredPerDay, 20);
+});
+
 test('never reports negative remaining work after goal completion', () => {
   const result = calculateGoalPace({ goal: 100, current: 120, start: '2026-09-01', end: '2026-09-30', asOf: '2026-09-30' });
   assert.equal(result.remaining, 0);
