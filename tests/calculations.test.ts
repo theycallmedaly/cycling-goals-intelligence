@@ -8,6 +8,15 @@ test('uses Monday through Sunday for weekly goals', () => {
   });
 });
 
+test('uses the rider-selected start day for weekly goals', () => {
+  assert.deepEqual(getPeriodBounds('week', '2026-09-02', 0), {
+    start: '2026-08-30', end: '2026-09-05', asOf: '2026-09-02', startLabel: 'Aug 30', endLabel: 'Sep 5',
+  });
+  assert.deepEqual(getPeriodBounds('week', '2026-09-02', 3), {
+    start: '2026-09-02', end: '2026-09-08', asOf: '2026-09-02', startLabel: 'Sep 2', endLabel: 'Sep 8',
+  });
+});
+
 test('calculates target and remaining pace using calendar days', () => {
   const result = calculateGoalPace({ goal: 70, current: 20, start: '2026-08-31', end: '2026-09-06', asOf: '2026-09-02' });
   assert.equal(result.totalDays, 7);

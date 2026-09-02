@@ -6,10 +6,11 @@ Cycling Goals Intelligence fills a gap in Strava Goals: it shows not only annual
 
 The first version is deliberately API-free so the calculation model can be reviewed before adding Strava authentication. It includes:
 
-- Weekly (Monday–Sunday), monthly, and annual calendar goals
+- Weekly (user-selected start day), monthly, and annual calendar goals
 - Distance in miles and elevation gain in feet
 - Editable manual goal and completed values, preloaded with realistic sample data
 - A selectable “progress through” date for testing any point in a period
+- A seven-day week-start selector that immediately updates weekly boundaries and pace
 - Responsive, accessible single-page UI suitable for GitHub and web deployment
 - A small, pure calculation module with automated boundary tests
 

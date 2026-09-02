@@ -1,4 +1,5 @@
 export type Timeframe = 'week' | 'month' | 'year';
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 type PaceInput = { goal: number; current: number; start: string; end: string; asOf: string };
 const DAY_MS = 86_400_000;
@@ -7,13 +8,13 @@ const toIso = (date: Date) => date.toISOString().slice(0, 10);
 const daysInclusive = (start: string, end: string) => Math.max(0, Math.round((parseDate(end).getTime() - parseDate(start).getTime()) / DAY_MS) + 1);
 const shortDate = (iso: string) => parseDate(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-export function getPeriodBounds(timeframe: Timeframe, asOf: string) {
+export function getPeriodBounds(timeframe: Timeframe, asOf: string, weekStartsOn: Weekday = 1) {
   const date = parseDate(asOf);
   let start: Date;
   let end: Date;
   if (timeframe === 'week') {
-    const mondayOffset = (date.getUTCDay() + 6) % 7;
-    start = new Date(date.getTime() - mondayOffset * DAY_MS);
+    const startOffset = (date.getUTCDay() - weekStartsOn + 7) % 7;
+    start = new Date(date.getTime() - startOffset * DAY_MS);
     end = new Date(start.getTime() + 6 * DAY_MS);
   } else if (timeframe === 'month') {
     start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 12));

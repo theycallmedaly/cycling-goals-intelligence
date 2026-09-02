@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { calculateGoalPace, getPeriodBounds, type Timeframe } from '@/lib/calculations';
+import { calculateGoalPace, getPeriodBounds, type Timeframe, type Weekday } from '@/lib/calculations';
 
 type GoalInput = { goal: number; current: number };
 type GoalData = Record<Timeframe, { distance: GoalInput; elevation: GoalInput }>;
@@ -13,9 +13,19 @@ const sampleData: GoalData = {
 };
 
 const periods: { id: Timeframe; label: string; eyebrow: string }[] = [
-  { id: 'week', label: 'This week', eyebrow: 'MON — SUN' },
+  { id: 'week', label: 'This week', eyebrow: 'YOUR WEEK' },
   { id: 'month', label: 'This month', eyebrow: 'CALENDAR MONTH' },
   { id: 'year', label: 'This year', eyebrow: 'CALENDAR YEAR' },
+];
+
+const weekdays: { value: Weekday; label: string }[] = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
 ];
 
 const metricMeta = {
@@ -36,9 +46,10 @@ export default function Home() {
   const [asOf, setAsOf] = useState(todayIso);
   const [goals, setGoals] = useState<GoalData>(sampleData);
   const [editing, setEditing] = useState(false);
+  const [weekStartsOn, setWeekStartsOn] = useState<Weekday>(1);
 
   const rows = useMemo(() => periods.map((period) => {
-    const bounds = getPeriodBounds(period.id, asOf);
+    const bounds = getPeriodBounds(period.id, asOf, weekStartsOn);
     return {
       ...period,
       bounds,
@@ -47,7 +58,7 @@ export default function Home() {
         ...calculateGoalPace({ ...goals[period.id][metric], ...bounds }),
       })),
     };
-  }), [asOf, goals]);
+  }), [asOf, goals, weekStartsOn]);
 
   const updateGoal = (period: Timeframe, metric: keyof typeof metricMeta, field: keyof GoalInput, value: string) => {
     setGoals((current) => ({
@@ -80,6 +91,10 @@ export default function Home() {
         <div className="date-card">
           <label htmlFor="as-of">Progress through</label>
           <input id="as-of" type="date" value={asOf} onChange={(event) => setAsOf(event.target.value)} />
+          <label htmlFor="week-start">My week starts on</label>
+          <select id="week-start" value={weekStartsOn} onChange={(event) => setWeekStartsOn(Number(event.target.value) as Weekday)}>
+            {weekdays.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}
+          </select>
           <span>Pace advances at midnight. Today&apos;s ride updates progress instantly.</span>
         </div>
       </section>
