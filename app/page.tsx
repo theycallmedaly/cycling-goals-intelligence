@@ -80,7 +80,7 @@ export default function Home() {
         <div className="date-card">
           <label htmlFor="as-of">Progress through</label>
           <input id="as-of" type="date" value={asOf} onChange={(event) => setAsOf(event.target.value)} />
-          <span>Remaining pace starts the following day.</span>
+          <span>Pace advances at midnight. Today&apos;s ride updates progress instantly.</span>
         </div>
       </section>
 
@@ -130,8 +130,8 @@ export default function Home() {
                     </div>
 
                     <div className={`pace-callout ${behind ? 'catchup' : 'steady'}`}>
-                      <span>{behind ? '7-day catch-up pace' : 'On-track daily pace'}</span>
-                      <strong>{format(behind ? result.catchUpPerDay : result.requiredPerDay, meta.decimals)} <small>{meta.unit}/day</small></strong>
+                      <span>{behind ? 'Ride today to regain pace' : 'On-track daily average'}</span>
+                      <strong>{format(behind ? result.catchUpToday : result.requiredPerDay, meta.decimals)} <small>{meta.unit}{behind ? ' today' : '/day'}</small></strong>
                     </div>
                   </section>
                 );

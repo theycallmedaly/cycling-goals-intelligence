@@ -28,13 +28,13 @@ export function getPeriodBounds(timeframe: Timeframe, asOf: string) {
 export function calculateGoalPace({ goal, current, start, end, asOf }: PaceInput) {
   const totalDays = daysInclusive(start, end);
   const elapsedDays = Math.min(totalDays, daysInclusive(start, asOf));
-  const remainingDays = Math.max(0, daysInclusive(asOf, end) - 1);
+  const remainingDays = Math.max(0, daysInclusive(asOf, end));
   const targetProgress = totalDays ? goal * (elapsedDays / totalDays) : goal;
   const aheadBehind = current - targetProgress;
   const remaining = Math.max(0, goal - current);
   const baselinePerDay = totalDays ? goal / totalDays : 0;
   const requiredPerDay = remainingDays ? remaining / remainingDays : remaining;
-  const catchUpWindow = Math.max(1, Math.min(7, remainingDays));
-  const catchUpPerDay = aheadBehind < 0 ? baselinePerDay + Math.abs(aheadBehind) / catchUpWindow : requiredPerDay;
-  return { totalDays, elapsedDays, remainingDays, targetProgress, aheadBehind, remaining, baselinePerDay, requiredPerDay, catchUpPerDay, progressPercent: goal ? current / goal * 100 : 0, targetPercent: goal ? targetProgress / goal * 100 : 0 };
+  const nextMidnightTarget = Math.min(goal, targetProgress + baselinePerDay);
+  const catchUpToday = Math.max(0, nextMidnightTarget - current);
+  return { totalDays, elapsedDays, remainingDays, targetProgress, aheadBehind, remaining, baselinePerDay, requiredPerDay, catchUpToday, progressPercent: goal ? current / goal * 100 : 0, targetPercent: goal ? targetProgress / goal * 100 : 0 };
 }

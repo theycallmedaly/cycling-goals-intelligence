@@ -17,7 +17,7 @@ Select **Edit goals** to replace the sample goal and progress values. All result
 
 ## Calculation definitions
 
-The selected date is treated as a completed snapshot: `current progress` includes riding through that date, and `remaining days` begin on the following calendar day.
+Pace advances once at midnight, matching Strava. The selected date's full share of the goal is therefore already due at 12:00 AM, while rides entered during the day change current progress immediately. Remaining calendar days include the selected date.
 
 | Result | Definition |
 | --- | --- |
@@ -25,8 +25,10 @@ The selected date is treated as a completed snapshot: `current progress` include
 | Target progress | `goal × elapsed calendar days ÷ total calendar days` (selected date included) |
 | Ahead / behind | `current progress − target progress`; positive is ahead, negative is behind |
 | Remaining | `max(goal − current progress, 0)` |
-| Daily required | `remaining ÷ calendar days after selected date` |
-| 7-day catch-up pace | When behind: normal full-period daily pace plus the deficit spread across the next seven days, or all remaining days when fewer than seven remain |
+| Daily required | `remaining ÷ calendar days including the selected date` |
+| Ride today to regain pace | When behind: the amount needed to reach the next midnight's target, capped at the overall goal |
+
+For example, with a 365-mile annual goal, the target at midnight on January 1 is 1 mile. Riding 2 miles moves the rider to 1 mile ahead. At midnight January 2 the target becomes 2 miles, so the rider is exactly on pace. If no ride happens that day, January 3 begins 1 mile behind and the app recommends riding 2 miles that day to reach the next midnight's 4-mile target.
 
 Calendar-day pacing is intentional: rest days are not guessed by the MVP. A future training-plan mode can distribute work across selected ride days instead.
 
@@ -48,7 +50,7 @@ npm test
 npm run build
 ```
 
-Tests cover weekly boundaries, leap-year math, behind-pace catch-up calculations, and completed goals.
+Tests cover weekly boundaries, the Strava-style midnight examples above, behind-pace catch-up calculations, and completed goals.
 
 ## Architecture
 
