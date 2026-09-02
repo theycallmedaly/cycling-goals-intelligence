@@ -11,6 +11,7 @@ The first version is deliberately API-free so the calculation model can be revie
 - Editable manual goal and completed values, preloaded with realistic sample data
 - A selectable “progress through” date for testing any point in a period
 - A seven-day week-start selector that immediately updates weekly boundaries and pace
+- A view toggle to organize goals by timeframe or by goal type (mileage first, then climbing)
 - Responsive, accessible single-page UI suitable for GitHub and web deployment
 - A small, pure calculation module with automated boundary tests
 

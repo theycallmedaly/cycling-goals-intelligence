@@ -5,6 +5,8 @@ import { calculateGoalPace, getPeriodBounds, type Timeframe, type Weekday } from
 
 type GoalInput = { goal: number; current: number };
 type GoalData = Record<Timeframe, { distance: GoalInput; elevation: GoalInput }>;
+type Metric = keyof GoalData['week'];
+type ViewMode = 'timeframe' | 'goalType';
 
 const sampleData: GoalData = {
   week: { distance: { goal: 150, current: 63 }, elevation: { goal: 7000, current: 2900 } },
@@ -47,6 +49,7 @@ export default function Home() {
   const [goals, setGoals] = useState<GoalData>(sampleData);
   const [editing, setEditing] = useState(false);
   const [weekStartsOn, setWeekStartsOn] = useState<Weekday>(1);
+  const [viewMode, setViewMode] = useState<ViewMode>('timeframe');
 
   const rows = useMemo(() => periods.map((period) => {
     const bounds = getPeriodBounds(period.id, asOf, weekStartsOn);
@@ -70,6 +73,50 @@ export default function Home() {
     }));
   };
 
+  const renderGoalCard = (period: (typeof rows)[number], result: (typeof rows)[number]['metrics'][number], title: string, subtitle: string) => {
+    const meta = metricMeta[result.metric];
+    const input = goals[period.id][result.metric];
+    const behind = result.aheadBehind < 0;
+    const completed = Math.min(100, result.progressPercent);
+    const target = Math.min(100, result.targetPercent);
+    return (
+      <section className="metric-card" key={`${period.id}-${result.metric}`}>
+        <div className="metric-title">
+          <span className={`metric-icon ${result.metric}`}>{result.metric === 'distance' ? '↗' : '▲'}</span>
+          <div><p>{title}</p><span>{subtitle}</span></div>
+        </div>
+
+        {editing ? (
+          <div className="inputs">
+            <label>Goal <input type="number" min="0" value={input.goal} onChange={(e) => updateGoal(period.id, result.metric, 'goal', e.target.value)} /></label>
+            <label>Completed <input type="number" min="0" value={input.current} onChange={(e) => updateGoal(period.id, result.metric, 'current', e.target.value)} /></label>
+          </div>
+        ) : (
+          <div className="primary-stat"><strong>{format(input.current, meta.decimals)}</strong><span> {meta.unit}</span></div>
+        )}
+
+        <div className="progress-wrap">
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${completed}%` }} />
+            <i className="target-tick" style={{ left: `${target}%` }} title="Target pace" />
+          </div>
+          <div className="progress-labels"><span>{format(result.progressPercent, 0)}% complete</span><span>Target today {format(result.targetProgress, meta.decimals)} {meta.unit}</span></div>
+        </div>
+
+        <div className="stat-grid">
+          <div><span>Pace</span><strong className={behind ? 'behind' : 'ahead'}>{behind ? '−' : '+'}{format(Math.abs(result.aheadBehind), meta.decimals)} {meta.unit}</strong></div>
+          <div><span>Remaining</span><strong>{format(result.remaining, meta.decimals)} {meta.unit}</strong></div>
+          <div><span>Immediate catch-up</span><strong>{behind ? `${format(result.catchUpToday, meta.decimals)} ${meta.unit}` : '—'}</strong></div>
+        </div>
+
+        <div className="pace-callout steady">
+          <span>Ride today to finish on target</span>
+          <strong>{format(result.requiredPerDay, meta.decimals)} <small>{meta.unit}/day</small></strong>
+        </div>
+      </section>
+    );
+  };
+
   return (
     <main>
       <header className="topbar">
@@ -87,6 +134,13 @@ export default function Home() {
           <p className="kicker"><span /> Pace intelligence</p>
           <h1>Know what today<br />needs from you.</h1>
           <p className="intro">A clear view of every cycling goal—what&apos;s done, what&apos;s due, and the daily pace that gets you there.</p>
+          <div className="view-control" role="group" aria-label="Organize goals">
+            <span>Organize goals</span>
+            <div>
+              <button aria-pressed={viewMode === 'timeframe'} onClick={() => setViewMode('timeframe')}>By timeframe</button>
+              <button aria-pressed={viewMode === 'goalType'} onClick={() => setViewMode('goalType')}>By goal type</button>
+            </div>
+          </div>
         </div>
         <div className="date-card">
           <label htmlFor="as-of">Progress through</label>
@@ -100,58 +154,18 @@ export default function Home() {
       </section>
 
       <section className="dashboard" aria-label="Goal pace dashboard">
-        {rows.map((period) => (
+        {viewMode === 'timeframe' ? rows.map((period) => (
           <article className="period" key={period.id}>
-            <div className="period-heading">
-              <div><p>{period.eyebrow}</p><h2>{period.label}</h2></div>
-              <span>{period.bounds.startLabel} — {period.bounds.endLabel}</span>
-            </div>
-
-            <div className="metric-grid">
-              {period.metrics.map((result) => {
-                const meta = metricMeta[result.metric];
-                const input = goals[period.id][result.metric];
-                const behind = result.aheadBehind < 0;
-                const completed = Math.min(100, result.progressPercent);
-                const target = Math.min(100, result.targetPercent);
-                return (
-                  <section className="metric-card" key={result.metric}>
-                    <div className="metric-title">
-                      <span className={`metric-icon ${result.metric}`}>{result.metric === 'distance' ? '↗' : '▲'}</span>
-                      <div><p>{meta.label}</p><span>{format(input.goal, meta.decimals)} {meta.unit} goal</span></div>
-                    </div>
-
-                    {editing ? (
-                      <div className="inputs">
-                        <label>Goal <input type="number" min="0" value={input.goal} onChange={(e) => updateGoal(period.id, result.metric, 'goal', e.target.value)} /></label>
-                        <label>Completed <input type="number" min="0" value={input.current} onChange={(e) => updateGoal(period.id, result.metric, 'current', e.target.value)} /></label>
-                      </div>
-                    ) : (
-                      <div className="primary-stat"><strong>{format(input.current, meta.decimals)}</strong><span> {meta.unit}</span></div>
-                    )}
-
-                    <div className="progress-wrap">
-                      <div className="progress-track">
-                        <div className="progress-fill" style={{ width: `${completed}%` }} />
-                        <i className="target-tick" style={{ left: `${target}%` }} title="Target pace" />
-                      </div>
-                      <div className="progress-labels"><span>{format(result.progressPercent, 0)}% complete</span><span>Target today {format(result.targetProgress, meta.decimals)} {meta.unit}</span></div>
-                    </div>
-
-                    <div className="stat-grid">
-                      <div><span>Pace</span><strong className={behind ? 'behind' : 'ahead'}>{behind ? '−' : '+'}{format(Math.abs(result.aheadBehind), meta.decimals)} {meta.unit}</strong></div>
-                      <div><span>Remaining</span><strong>{format(result.remaining, meta.decimals)} {meta.unit}</strong></div>
-                      <div><span>Immediate catch-up</span><strong>{behind ? `${format(result.catchUpToday, meta.decimals)} ${meta.unit}` : '—'}</strong></div>
-                    </div>
-
-                    <div className="pace-callout steady">
-                      <span>Ride today to finish on target</span>
-                      <strong>{format(result.requiredPerDay, meta.decimals)} <small>{meta.unit}/day</small></strong>
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
+            <div className="period-heading"><div><p>{period.eyebrow}</p><h2>{period.label}</h2></div><span>{period.bounds.startLabel} — {period.bounds.endLabel}</span></div>
+            <div className="metric-grid">{period.metrics.map((result) => renderGoalCard(period, result, metricMeta[result.metric].label, `${format(goals[period.id][result.metric].goal, metricMeta[result.metric].decimals)} ${metricMeta[result.metric].unit} goal`))}</div>
+          </article>
+        )) : (['distance', 'elevation'] as Metric[]).map((metric) => (
+          <article className="period" key={metric}>
+            <div className="period-heading"><div><p>{metric === 'distance' ? 'MILEAGE' : 'CLIMBING'}</p><h2>{metric === 'distance' ? 'Mileage goals' : 'Climbing goals'}</h2></div><span>Weekly · Monthly · Yearly</span></div>
+            <div className="metric-grid three-up">{rows.map((period) => {
+              const result = period.metrics.find((item) => item.metric === metric)!;
+              return renderGoalCard(period, result, period.label, `${period.bounds.startLabel} — ${period.bounds.endLabel} · ${format(goals[period.id][metric].goal, metricMeta[metric].decimals)} ${metricMeta[metric].unit} goal`);
+            })}</div>
           </article>
         ))}
       </section>
