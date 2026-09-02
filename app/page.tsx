@@ -126,12 +126,12 @@ export default function Home() {
                     <div className="stat-grid">
                       <div><span>Pace</span><strong className={behind ? 'behind' : 'ahead'}>{behind ? '−' : '+'}{format(Math.abs(result.aheadBehind), meta.decimals)} {meta.unit}</strong></div>
                       <div><span>Remaining</span><strong>{format(result.remaining, meta.decimals)} {meta.unit}</strong></div>
-                      <div><span>Daily required</span><strong>{format(result.requiredPerDay, meta.decimals)} {meta.unit}</strong></div>
+                      <div><span>Immediate catch-up</span><strong>{behind ? `${format(result.catchUpToday, meta.decimals)} ${meta.unit}` : '—'}</strong></div>
                     </div>
 
-                    <div className={`pace-callout ${behind ? 'catchup' : 'steady'}`}>
-                      <span>{behind ? 'Ride today to regain pace' : 'On-track daily average'}</span>
-                      <strong>{format(behind ? result.catchUpToday : result.requiredPerDay, meta.decimals)} <small>{meta.unit}{behind ? ' today' : '/day'}</small></strong>
+                    <div className="pace-callout steady">
+                      <span>Ride today to finish on target</span>
+                      <strong>{format(result.requiredPerDay, meta.decimals)} <small>{meta.unit}/day</small></strong>
                     </div>
                   </section>
                 );

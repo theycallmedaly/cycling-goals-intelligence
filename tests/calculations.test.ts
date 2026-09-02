@@ -40,6 +40,15 @@ test('reports on pace Jan 2 and a two-mile catch-up ride Jan 3', () => {
   assert.ok(Math.abs(jan3.catchUpToday - 2) < 1e-9);
 });
 
+test('spreads a day-45 deficit over every remaining day', () => {
+  const day45 = calculateGoalPace({ goal: 365, current: 35, ...getPeriodBounds('year', '2026-02-14') });
+  assert.equal(day45.elapsedDays, 45);
+  assert.equal(day45.remainingDays, 321);
+  assert.equal(day45.remaining, 330);
+  assert.ok(Math.abs(day45.requiredPerDay - (330 / 321)) < 1e-9);
+  assert.ok(Math.abs(day45.catchUpToday - 11) < 1e-9);
+});
+
 test('never reports negative remaining work after goal completion', () => {
   const result = calculateGoalPace({ goal: 100, current: 120, start: '2026-09-01', end: '2026-09-30', asOf: '2026-09-30' });
   assert.equal(result.remaining, 0);

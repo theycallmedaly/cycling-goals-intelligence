@@ -25,10 +25,12 @@ Pace advances once at midnight, matching Strava. The selected date's full share 
 | Target progress | `goal × elapsed calendar days ÷ total calendar days` (selected date included) |
 | Ahead / behind | `current progress − target progress`; positive is ahead, negative is behind |
 | Remaining | `max(goal − current progress, 0)` |
-| Daily required | `remaining ÷ calendar days including the selected date` |
-| Ride today to regain pace | When behind: the amount needed to reach the next midnight's target, capped at the overall goal |
+| Ride today to finish on target | `remaining ÷ calendar days including the selected date`; this is the primary, sustainable recommendation |
+| Immediate catch-up | When behind: the amount needed to erase the entire deficit and reach the next midnight's target, capped at the overall goal |
 
-For example, with a 365-mile annual goal, the target at midnight on January 1 is 1 mile. Riding 2 miles moves the rider to 1 mile ahead. At midnight January 2 the target becomes 2 miles, so the rider is exactly on pace. If no ride happens that day, January 3 begins 1 mile behind and the app recommends riding 2 miles that day to reach the next midnight's 4-mile target.
+For example, with a 365-mile annual goal, the target at midnight on January 1 is 1 mile. Riding 2 miles moves the rider to 1 mile ahead. At midnight January 2 the target becomes 2 miles, so the rider is exactly on pace. If no ride happens that day, January 3 begins 1 mile behind. The sustainable recommendation remains 1 mile per day, while the secondary immediate catch-up figure is 2 miles.
+
+On day 45, a rider who is 10 miles behind has completed 35 of 365 miles. With 330 miles remaining across 321 calendar days, the primary recommendation is about 1.03 miles per day—not an unreasonable 11-mile ride. The 11-mile immediate catch-up amount remains visible as optional context.
 
 Calendar-day pacing is intentional: rest days are not guessed by the MVP. A future training-plan mode can distribute work across selected ride days instead.
 
@@ -50,7 +52,7 @@ npm test
 npm run build
 ```
 
-Tests cover weekly boundaries, the Strava-style midnight examples above, behind-pace catch-up calculations, and completed goals.
+Tests cover weekly boundaries, the Strava-style midnight examples above, sustainable day-45 deficit recovery, immediate catch-up calculations, and completed goals.
 
 ## Architecture
 
