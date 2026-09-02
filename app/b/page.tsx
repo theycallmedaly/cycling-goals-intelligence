@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { calculateGoalPace, getPeriodBounds, type Timeframe, type Weekday } from '@/lib/calculations';
 
 type Metric = 'distance' | 'elevation';
@@ -21,6 +21,7 @@ const metrics: { id: Metric; label: string; unit: string; icon: string }[] = [
 ];
 
 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const STORAGE_KEY = 'cycling-goals-intelligence-version-b';
 const blankValues = Object.fromEntries(
   periods.flatMap((period) => metrics.flatMap((metric) => [
     [`${period.id}_${metric.id}_goal`, ''],
@@ -42,6 +43,23 @@ export default function VersionB() {
   const [submitted, setSubmitted] = useState<GoalData | null>(null);
   const [asOf, setAsOf] = useState(todayIso);
   const [weekStartsOn, setWeekStartsOn] = useState<Weekday>(1);
+  const [saveMessage, setSaveMessage] = useState('Your entries will be remembered on this browser.');
+
+  useEffect(() => {
+    const loadSavedValues = window.setTimeout(() => {
+      try {
+        const saved = window.localStorage.getItem(STORAGE_KEY);
+        if (!saved) return;
+        const parsed = JSON.parse(saved) as { values?: FormValues; weekStartsOn?: Weekday };
+        if (parsed.values) setValues({ ...blankValues, ...parsed.values });
+        if (typeof parsed.weekStartsOn === 'number') setWeekStartsOn(parsed.weekStartsOn);
+        setSaveMessage('Saved values loaded. Update your latest totals, then calculate.');
+      } catch {
+        setSaveMessage('Saved values could not be loaded. Enter them again to replace the saved copy.');
+      }
+    }, 0);
+    return () => window.clearTimeout(loadSavedValues);
+  }, []);
 
   const results = useMemo(() => submitted && metrics.map((metric) => ({
     ...metric,
@@ -63,8 +81,22 @@ export default function VersionB() {
         };
       }
     }
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ values, weekStartsOn }));
+      setSaveMessage('Saved on this browser. Your values will be prefilled next time.');
+    } catch {
+      setSaveMessage('Results calculated, but this browser did not allow saving.');
+    }
     setSubmitted(data);
     requestAnimationFrame(() => document.getElementById('your-results')?.scrollIntoView({ behavior: 'smooth' }));
+  };
+
+  const clearSavedData = () => {
+    window.localStorage.removeItem(STORAGE_KEY);
+    setValues(blankValues);
+    setSubmitted(null);
+    setWeekStartsOn(1);
+    setSaveMessage('Saved values erased from this browser.');
   };
 
   return (
@@ -81,11 +113,11 @@ export default function VersionB() {
         <p className="intro">No account or connection required. Enter your current totals and goals to calculate what you need to ride each day.</p>
       </section>
 
-      <form className="goal-form" onSubmit={submit}>
+      <form className="goal-form" onSubmit={submit} autoComplete="on">
         <div className="form-settings">
           <label>Progress through<input type="date" required value={asOf} onChange={(event) => setAsOf(event.target.value)} /></label>
           <label>My week starts on<select value={weekStartsOn} onChange={(event) => setWeekStartsOn(Number(event.target.value) as Weekday)}>{weekdays.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
-          <p><b>Private by design.</b> These values stay in this browser session and are not saved.</p>
+          <p><b>Private by design.</b> {saveMessage} Nothing is sent to an account or server. <button type="button" onClick={clearSavedData}>Erase saved data</button></p>
         </div>
 
         <div className="form-columns">
@@ -96,10 +128,10 @@ export default function VersionB() {
                 <div className="form-period" key={period.id}>
                   <h2>{period.label}</h2>
                   <label>{period.label} {metric.label.toLowerCase()} goal
-                    <span className="number-input"><input type="number" min="0" step="any" required inputMode="decimal" value={values[`${period.id}_${metric.id}_goal`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_goal`]: event.target.value })} /><i>{metric.unit}</i></span>
+                    <span className="number-input"><input type="number" name={`${period.id}_${metric.id}_goal`} autoComplete="on" min="0" step="any" required inputMode="decimal" value={values[`${period.id}_${metric.id}_goal`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_goal`]: event.target.value })} /><i>{metric.unit}</i></span>
                   </label>
                   <label>{period.label} {metric.label.toLowerCase()} so far
-                    <span className="number-input"><input type="number" min="0" step="any" required inputMode="decimal" value={values[`${period.id}_${metric.id}_current`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_current`]: event.target.value })} /><i>{metric.unit}</i></span>
+                    <span className="number-input"><input type="number" name={`${period.id}_${metric.id}_current`} autoComplete="on" min="0" step="any" required inputMode="decimal" value={values[`${period.id}_${metric.id}_current`]} onChange={(event) => setValues({ ...values, [`${period.id}_${metric.id}_current`]: event.target.value })} /><i>{metric.unit}</i></span>
                   </label>
                 </div>
               ))}

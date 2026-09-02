@@ -12,7 +12,7 @@ The first version is deliberately API-free so the calculation model can be revie
 - A selectable “progress through” date for testing any point in a period
 - A seven-day week-start selector that immediately updates weekly boundaries and pace
 - A view toggle to organize goals by timeframe or by goal type (mileage first, then climbing)
-- A separate anonymous, form-driven Version B at `/b` for entering all twelve mileage and elevation values before calculating pace
+- A separate anonymous, form-driven Version B at `/b` that remembers all twelve values and the week-start preference in that browser, with an erase-data control
 - Responsive, accessible single-page UI suitable for GitHub and web deployment
 - A small, pure calculation module with automated boundary tests
 
