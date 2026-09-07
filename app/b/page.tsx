@@ -211,9 +211,7 @@ export default function VersionB() {
       </header>
 
       <section className="b-hero">
-        <p className="kicker"><span /> Version B · anonymous calculator</p>
         <h1>Tell us your goals.<br />Get today&apos;s pace.</h1>
-        <p className="intro">No account or connection required. Enter your current totals and goals to calculate what you need to ride each day.</p>
       </section>
 
       <form className="goal-form" onSubmit={submit} autoComplete="off">
