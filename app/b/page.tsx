@@ -218,7 +218,7 @@ export default function VersionB() {
         <div className="form-settings">
           <label>Progress through<input type="date" required value={asOf} onChange={(event) => setAsOf(event.target.value)} /></label>
           <label>My week starts on<select value={weekStartsOn} onChange={(event) => setWeekStartsOn(Number(event.target.value) as Weekday)}>{weekdays.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
-          <p><b>Private by design.</b> {saveMessage} Nothing is sent to an account or server. <button type="button" onClick={clearSavedData}>Erase saved data</button></p>
+          <p><b>Private by design.</b> {saveMessage} <button type="button" onClick={clearSavedData}>Erase saved data</button></p>
         </div>
 
         <section className="blockout-section">
