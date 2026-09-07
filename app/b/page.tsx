@@ -210,10 +210,6 @@ export default function VersionB() {
         <a className="version-link" href="/">View Version A</a>
       </header>
 
-      <section className="b-hero">
-        <h1>Tell us your goals.<br />Get today&apos;s pace.</h1>
-      </section>
-
       <form className="goal-form" onSubmit={submit} autoComplete="off">
         <div className="form-settings">
           <label>Progress through<input type="date" required value={asOf} onChange={(event) => setAsOf(event.target.value)} /></label>
