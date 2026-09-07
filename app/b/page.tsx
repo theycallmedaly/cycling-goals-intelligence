@@ -16,7 +16,7 @@ const periods: { id: Timeframe; label: string }[] = [
 ];
 
 const metrics: { id: Metric; label: string; unit: string; icon: string }[] = [
-  { id: 'distance', label: 'Mileage', unit: 'mi', icon: '↗' },
+  { id: 'distance', label: 'Distance', unit: 'mi', icon: '↗' },
   { id: 'elevation', label: 'Elevation', unit: 'ft', icon: '▲' },
 ];
 
@@ -250,7 +250,7 @@ export default function VersionB() {
         <div className="form-columns">
           {metrics.map((metric) => (
             <fieldset key={metric.id}>
-              <legend><span className={`metric-icon ${metric.id}`}>{metric.icon}</span><span><b>{metric.label}</b><small>{metric.unit === 'mi' ? 'Miles' : 'Feet climbed'}</small></span></legend>
+              <legend><span className={`metric-icon ${metric.id}`}>{metric.icon}</span><span><b>{metric.label}</b></span></legend>
               {periods.map((period) => (
                 <div className="form-period" key={period.id}>
                   <h2>{period.label}</h2>
@@ -272,7 +272,7 @@ export default function VersionB() {
       {results && <section className="b-results" id="your-results">
         <div className="results-heading"><div><p className="kicker"><span /> Your results</p><h2>Your pace from here.</h2></div><button onClick={() => document.querySelector('.goal-form')?.scrollIntoView({ behavior: 'smooth' })}>Edit answers</button></div>
         {results.map((metric) => <article className="result-group" key={metric.id}>
-          <div className="period-heading"><div><p>{metric.id === 'distance' ? 'MILEAGE' : 'CLIMBING'}</p><h2>{metric.label} goals</h2></div><span>Weekly · Monthly · Annual</span></div>
+          <div className="period-heading"><div><p>{metric.id === 'distance' ? 'DISTANCE' : 'CLIMBING'}</p><h2>{metric.label} goals</h2></div><span>Weekly · Monthly · Annual</span></div>
           <div className="metric-grid three-up">{metric.periods.slice().reverse().map((period) => {
             const behind = period.result.aheadBehind < 0;
             return <section className="metric-card" key={period.id}>

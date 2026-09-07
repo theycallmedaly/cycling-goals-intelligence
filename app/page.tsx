@@ -162,7 +162,7 @@ export default function Home() {
           </article>
         )) : (['distance', 'elevation'] as Metric[]).map((metric) => (
           <article className="period" key={metric}>
-            <div className="period-heading"><div><p>{metric === 'distance' ? 'MILEAGE' : 'CLIMBING'}</p><h2>{metric === 'distance' ? 'Mileage goals' : 'Climbing goals'}</h2></div><span>Weekly · Monthly · Yearly</span></div>
+            <div className="period-heading"><div><p>{metric === 'distance' ? 'DISTANCE' : 'CLIMBING'}</p><h2>{metric === 'distance' ? 'Distance goals' : 'Climbing goals'}</h2></div><span>Weekly · Monthly · Yearly</span></div>
             <div className="metric-grid three-up">{rows.map((period) => {
               const result = period.metrics.find((item) => item.metric === metric)!;
               return renderGoalCard(period, result, period.label, `${period.bounds.startLabel} — ${period.bounds.endLabel} · ${format(goals[period.id][metric].goal, metricMeta[metric].decimals)} ${metricMeta[metric].unit} goal`);
