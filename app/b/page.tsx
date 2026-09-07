@@ -266,7 +266,7 @@ export default function VersionB() {
           ))}
         </div>
         {formError && <p className="form-error" role="alert">{formError}</p>}
-        <button className="calculate-button" type="submit">Calculate my pace <span>→</span></button>
+        <button className="calculate-button" type="submit">Calculate My Daily Goal <span>→</span></button>
       </form>
 
       {results && <section className="b-results" id="your-results">
